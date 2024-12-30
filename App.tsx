@@ -3,13 +3,33 @@ import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 
 import CalendarScreen from "./screens/CalendarScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 import Colors from "./constants/colors";
+import LoginScreen from "./screens/LoginScreen";
+import SignupScreen from "./screens/SignupScreen";
 
 const BottomTab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+function AuthStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        // headerStyle: { backgroundColor: Colors.primary },
+        // headerTintColor: 'white',
+        // contentStyle: { backgroundColor: Colors.primary100 },
+      }}
+    >
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Signup" component={SignupScreen} />
+    </Stack.Navigator>
+  );
+}
 
 export default function App() {
   return (
@@ -17,7 +37,8 @@ export default function App() {
       <StatusBar style="light" />
       <View style={styles.container}>
         <NavigationContainer>
-          <BottomTab.Navigator
+          <AuthStack />
+          {/* <BottomTab.Navigator
             screenOptions={{
               headerStyle: { backgroundColor: Colors.primary },
               headerTintColor: "white",
@@ -42,7 +63,7 @@ export default function App() {
                 ),
               }}
             />
-          </BottomTab.Navigator>
+          </BottomTab.Navigator> */}
         </NavigationContainer>
       </View>
     </>

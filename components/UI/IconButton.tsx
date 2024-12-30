@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Colors from "../constants/colors";
+import Colors from "../../constants/colors";
 
 interface IconButtonProps {
   icon: string;
