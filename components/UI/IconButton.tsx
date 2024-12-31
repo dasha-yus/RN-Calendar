@@ -5,14 +5,20 @@ import Colors from "../../constants/colors";
 interface IconButtonProps {
   icon: string;
   color?: string;
+  style?: object;
   onPress: () => void;
 }
 
-function IconButton({ icon, color = Colors.primary, onPress }: IconButtonProps) {
+function IconButton({
+  icon,
+  color = Colors.primary,
+  style,
+  onPress,
+}: IconButtonProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => pressed && styles.pressed}
+      style={({ pressed }) => [pressed && styles.pressed, style]}
     >
       <Ionicons name={icon as any} size={24} color={color} />
     </Pressable>

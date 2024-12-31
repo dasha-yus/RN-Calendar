@@ -1,12 +1,14 @@
 import { StyleSheet, View, Button, Dimensions, Alert } from "react-native";
 import { useState } from "react";
 import { Formik } from "formik";
+import { useDispatch } from "react-redux";
 
 import Colors from "../constants/colors";
 import { loginValidationSchema } from "../validators/LoginValidationSchema";
 import TextInputField from "../components/Formik/TextInputField";
 import AuthContainer from "../components/Auth";
 import { login } from "../api/auth";
+import { authenticate } from "../store/reducers/auth";
 
 const { width, height } = Dimensions.get("window");
 
@@ -18,17 +20,24 @@ interface LoginScreenFormValues {
 const LoginScreen = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
+  const dispatch = useDispatch();
+
   const onSubmit = async (values: LoginScreenFormValues) => {
     setIsAuthenticating(true);
     try {
-      await login(values.email, values.password);
+      const { token, refreshToken, expiresIn } = await login(
+        values.email,
+        values.password
+      );
+      dispatch(authenticate({ token, refreshToken, expiresIn }));
     } catch (error) {
       Alert.alert(
         "Authentication failed",
         "Could not log you in. Please check your credentials or try again later"
       );
+    } finally {
+      setIsAuthenticating(false);
     }
-    setIsAuthenticating(false);
   };
 
   return (

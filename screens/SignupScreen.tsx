@@ -1,12 +1,14 @@
 import { StyleSheet, View, Button, Dimensions, Alert } from "react-native";
 import { useState } from "react";
 import { Formik } from "formik";
+import { useDispatch } from "react-redux";
 
 import Colors from "../constants/colors";
 import { signupValidationSchema } from "../validators/SignupValidationSchema";
 import TextInputField from "../components/Formik/TextInputField";
 import { createUser } from "../api/auth";
 import AuthContainer from "../components/Auth";
+import { authenticate } from "../store/reducers/auth";
 
 const { width, height } = Dimensions.get("window");
 
@@ -19,17 +21,24 @@ interface SignupScreenFormValues {
 const SignupScreen = () => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
 
+  const dispatch = useDispatch();
+
   const onSubmit = async (values: SignupScreenFormValues) => {
     setIsAuthenticating(true);
     try {
-      await createUser(values.email, values.password);
+      const { token, refreshToken, expiresIn } = await createUser(
+        values.email,
+        values.password
+      );
+      dispatch(authenticate({ token, refreshToken, expiresIn }));
     } catch (error) {
       Alert.alert(
         "Authentication failed",
         "Could not create user, please check your input and try again later."
       );
+    } finally {
+      setIsAuthenticating(false);
     }
-    setIsAuthenticating(false);
   };
 
   return (
