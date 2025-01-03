@@ -1,11 +1,13 @@
 import { useLayoutEffect, useState } from "react";
-import { StyleSheet, View, Text, Dimensions } from "react-native";
-import IconButton from "../components/UI/IconButton";
-import Colors from "../constants/colors";
+import { StyleSheet, View, Text, Dimensions, Pressable } from "react-native";
 
-const { width, height } = Dimensions.get("window");
+import IconButton from "../../components/UI/IconButton";
+import Colors from "../../constants/colors";
+import { events } from "./DayCalendarScreen";
 
-const CalendarScreen = () => {
+const { height } = Dimensions.get("window");
+
+const MonthCalendarScreen = ({ navigation }: any) => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [daysInMonth, setDaysInMonth] = useState<number[]>([]);
@@ -54,6 +56,13 @@ const CalendarScreen = () => {
     }
   };
 
+  const dateSelectHandler = (day: number) => {
+    navigation.navigate({
+      name: "Day",
+      params: { year: selectedYear, month: selectedMonth, day },
+    });
+  };
+
   const renderDates = () => {
     const now = new Date();
     const isCurrentMonthYearSelected =
@@ -64,16 +73,35 @@ const CalendarScreen = () => {
     ));
 
     const dateCells = daysInMonth.map((date) => (
-      <Text
+      <Pressable
         key={date}
-        style={
-          date === now.getDate() && isCurrentMonthYearSelected
-            ? [styles.dateCell, styles.dateNow]
-            : styles.dateCell
+        onPress={() => dateSelectHandler(date)}
+        style={({ pressed }) =>
+          isCurrentMonthYearSelected && date === now.getDate()
+            ? [styles.dateCell, styles.dateNow, pressed && styles.pressedToday]
+            : [styles.dateCell, pressed && styles.pressed]
         }
       >
-        {date}
-      </Text>
+        <View>
+          <Text>{date}</Text>
+          {events
+            .filter(
+              (event) =>
+                isCurrentMonthYearSelected &&
+                new Date(event.date).getDate() === date
+            )
+            .sort(
+              (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+            )
+            .map((event, idx) => (
+              <View key={idx} style={styles.eventContainer}>
+                <Text style={styles.eventText} numberOfLines={1}>
+                  {event.title}
+                </Text>
+              </View>
+            ))}
+        </View>
+      </Pressable>
     ));
 
     return (
@@ -104,7 +132,7 @@ const CalendarScreen = () => {
   );
 };
 
-export default CalendarScreen;
+export default MonthCalendarScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -145,15 +173,32 @@ const styles = StyleSheet.create({
   dateCell: {
     width: "14.28%", // 100% / 7 days
     textAlign: "center",
-    padding: 10,
+    padding: 4,
     borderWidth: 1,
     borderColor: "#ccc",
     height: height / 7,
+    overflow: "hidden",
   },
   dateNow: {
     backgroundColor: Colors.secondary100,
   },
   emptyDay: {
     width: "14.28%",
+  },
+  pressed: {
+    backgroundColor: Colors.gray200,
+  },
+  pressedToday: {
+    opacity: 0.75,
+  },
+  eventContainer: {
+    backgroundColor: Colors.primary,
+    padding: 4,
+    borderRadius: 4,
+    marginTop: 4,
+  },
+  eventText: {
+    color: "#fff",
+    fontSize: 10,
   },
 });

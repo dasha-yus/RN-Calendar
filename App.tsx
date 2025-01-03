@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { DrawerActions, NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Ionicons } from "@expo/vector-icons";
+import { createDrawerNavigator } from "@react-navigation/drawer";
 import { Provider, useDispatch, useSelector } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AppLoading from "expo-app-loading";
 
 import Colors from "./constants/colors";
-import CalendarScreen from "./screens/CalendarScreen";
 import SettingsScreen from "./screens/SettingsScreen";
 import LoginScreen from "./screens/LoginScreen";
 import SignupScreen from "./screens/SignupScreen";
+import MonthCalendarScreen from "./screens/Calendar/MonthCalendarScreen";
+import DayCalendarScreen from "./screens/Calendar/DayCalendarScreen";
 import { store } from "./store";
 import {
   authenticate,
@@ -25,6 +27,7 @@ import IconButton from "./components/UI/IconButton";
 
 const BottomTab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+const Drawer = createDrawerNavigator();
 
 function AuthStack() {
   return (
@@ -39,7 +42,71 @@ function AuthStack() {
   );
 }
 
+function CalendarDrawer() {
+  return (
+    <Drawer.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Drawer.Screen
+        name="Month"
+        component={MonthCalendarScreen}
+        options={{
+          title: "Month",
+          drawerIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="calendar-month"
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Week"
+        component={MonthCalendarScreen}
+        options={{
+          title: "Week",
+          drawerIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="calendar-week"
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="ThreeDays"
+        component={MonthCalendarScreen}
+        options={{
+          title: "3 days",
+          drawerIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="calendar-range"
+              color={color}
+              size={size}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Day"
+        component={DayCalendarScreen}
+        options={{
+          title: "Day",
+          drawerIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="calendar" color={color} size={size} />
+          ),
+        }}
+      />
+    </Drawer.Navigator>
+  );
+}
+
 function AuthenticatedStack() {
+  const navigation = useNavigation<any>();
   const dispatch: any = useDispatch();
   const { refreshToken, expiresIn } = useSelector(
     (state: { auth: AuthState }) => state.auth
@@ -76,10 +143,18 @@ function AuthenticatedStack() {
     >
       <BottomTab.Screen
         name="Calendar"
-        component={CalendarScreen}
+        component={CalendarDrawer}
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar" color={color} size={size} />
+          ),
+          headerLeft: ({ tintColor }) => (
+            <IconButton
+              icon="menu"
+              color={tintColor}
+              onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
+              style={{ paddingLeft: 16, marginRight: 10, marginTop: 3 }}
+            />
           ),
         }}
       />
