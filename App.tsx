@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
-import { DrawerActions, NavigationContainer, useNavigation } from "@react-navigation/native";
+import {
+  DrawerActions,
+  NavigationContainer,
+  useNavigation,
+} from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createDrawerNavigator } from "@react-navigation/drawer";
@@ -9,12 +13,14 @@ import { Provider, useDispatch, useSelector } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AppLoading from "expo-app-loading";
+import Toast from "react-native-toast-message";
 
 import Colors from "./constants/colors";
 import SettingsScreen from "./screens/SettingsScreen";
 import LoginScreen from "./screens/LoginScreen";
 import SignupScreen from "./screens/SignupScreen";
 import MonthCalendarScreen from "./screens/Calendar/MonthCalendarScreen";
+import ThreeDaysCalendarScreen from "./screens/Calendar/ThreeDaysCalendarScreen";
 import DayCalendarScreen from "./screens/Calendar/DayCalendarScreen";
 import { store } from "./store";
 import {
@@ -24,6 +30,8 @@ import {
   refreshAccessToken,
 } from "./store/reducers/auth";
 import IconButton from "./components/UI/IconButton";
+import { getAllSettings } from "./api/settings";
+import { setSettings } from "./store/reducers/settings";
 
 const BottomTab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -79,7 +87,7 @@ function CalendarDrawer() {
       />
       <Drawer.Screen
         name="ThreeDays"
-        component={MonthCalendarScreen}
+        component={ThreeDaysCalendarScreen}
         options={{
           title: "3 days",
           drawerIcon: ({ color, size }) => (
@@ -124,6 +132,17 @@ function AuthenticatedStack() {
       return () => clearTimeout(refreshTimeout);
     }
   }, [refreshToken, expiresIn, dispatch]);
+
+  useEffect(() => {
+    const getSettings = async () => {
+      try {
+        const settings = await getAllSettings();
+        dispatch(setSettings({ firstDay: settings.firstDay }));
+      } catch (error) {}
+    };
+
+    getSettings().catch(console.error);
+  }, []);
 
   return (
     <BottomTab.Navigator
@@ -224,6 +243,7 @@ export default function App() {
       <Provider store={store}>
         <View style={styles.container}>
           <Root />
+          <Toast />
         </View>
       </Provider>
     </>

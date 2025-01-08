@@ -10,7 +10,7 @@ import AuthContainer from "../components/Auth";
 import { login } from "../api/auth";
 import { authenticate } from "../store/reducers/auth";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 interface LoginScreenFormValues {
   email: string;

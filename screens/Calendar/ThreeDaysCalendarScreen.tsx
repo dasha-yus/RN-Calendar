@@ -15,14 +15,7 @@ export const events: any[] = [
   { date: new Date(2025, 0, 4, 12, 30, 0), title: "Event-2", duration: 1 },
 ];
 
-const dateOptions: Intl.DateTimeFormatOptions = {
-  weekday: "long",
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-};
-
-const DayCalendarScreen = ({ route }: any) => {
+const ThreeDaysCalendarScreen = ({ route }: any) => {
   const now = new Date();
 
   const [day, setDay] = useState(now.getDate());
@@ -56,38 +49,73 @@ const DayCalendarScreen = ({ route }: any) => {
   }, []);
 
   useEffect(() => {
-    const date = new Date(
-      route.params?.year,
-      route.params?.month,
-      route.params?.day
-    ).toLocaleDateString("en-US", dateOptions);
-    setFormattedDate(date);
+    const startDate = new Date(year, month, day);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 2);
 
-    setDay(route.params?.day);
-    setMonth(route.params?.month);
-    setYear(route.params?.year);
-  }, [route.params]);
-
-  useEffect(() => {
-    const date = new Date(year, month, day).toLocaleDateString(
-      "en-US",
-      dateOptions
-    );
-    setFormattedDate(date);
+    const isDiffYear = startDate.getFullYear() !== endDate.getFullYear();
+    const datesInterval = `${formatDate(startDate, isDiffYear)} - ${formatDate(
+      endDate,
+      isDiffYear
+    )}`;
+    setFormattedDate(datesInterval);
   }, [day, month, year]);
 
-  const handlePrevDay = () => {
-    const prevDate = new Date(year, month, day - 1);
+  const formatDate = (date: Date, withYear: boolean = false) => {
+    const options: Intl.DateTimeFormatOptions = {
+      day: "numeric",
+      month: "long",
+      year: withYear ? "numeric" : undefined,
+    };
+    return date.toLocaleDateString("en-US", options);
+  };
+
+  const handlePrevThreeDays = () => {
+    const prevDate = new Date(year, month, day - 3);
     setDay(prevDate.getDate());
     setMonth(prevDate.getMonth());
     setYear(prevDate.getFullYear());
   };
 
-  const handleNextDay = () => {
-    const nextDate = new Date(year, month, day + 1);
+  const handleNextThreeDays = () => {
+    const nextDate = new Date(year, month, day + 3);
     setDay(nextDate.getDate());
     setMonth(nextDate.getMonth());
     setYear(nextDate.getFullYear());
+  };
+
+  const renderEvents = (hour: number) => {
+    return (
+      <View style={styles.eventColumn}>
+        {events
+          .filter(
+            (event) =>
+              new Date(event.date).getDate() === day &&
+              new Date(event.date).getHours() === hour
+          )
+          .sort(
+            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+          )
+          .map((event, idx) => (
+            <Pressable
+              key={idx}
+              style={({ pressed }) => pressed && styles.pressed}
+              onPress={onEventSelected}
+            >
+              <View
+                style={[styles.eventContainer, { height: 32 * event.duration }]}
+              >
+                <Text
+                  style={styles.eventText}
+                  numberOfLines={event.duration > 1 ? 2 : 1}
+                >
+                  {event.title}
+                </Text>
+              </View>
+            </Pressable>
+          ))}
+      </View>
+    );
   };
 
   const onEventSelected = () => {};
@@ -100,37 +128,11 @@ const DayCalendarScreen = ({ route }: any) => {
             <Text style={styles.hourText}>
               {index.toString().length === 1 ? `0${index}` : index}:00
             </Text>
-            {events
-              .filter(
-                (event) =>
-                  new Date(event.date).getDate() === day &&
-                  new Date(event.date).getHours() === index
-              )
-              .sort(
-                (a, b) =>
-                  new Date(a.date).getTime() - new Date(b.date).getTime()
-              )
-              .map((event, idx) => (
-                <Pressable
-                  key={idx}
-                  style={({ pressed }) => pressed && styles.pressed}
-                  onPress={onEventSelected}
-                >
-                  <View
-                    style={[
-                      styles.eventContainer,
-                      { height: 32 * event.duration },
-                    ]}
-                  >
-                    <Text
-                      style={styles.eventText}
-                      numberOfLines={event.duration > 1 ? 2 : 1}
-                    >
-                      {event.title}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))}
+            <View style={styles.eventsWrapper}>
+              {renderEvents(index)}
+              {renderEvents(index)}
+              {renderEvents(index)}
+            </View>
             {index === currentHour && (
               <View
                 ref={targetRef}
@@ -141,6 +143,13 @@ const DayCalendarScreen = ({ route }: any) => {
               />
             )}
           </View>
+        ))}
+        <View style={styles.line} />
+        {Array.from({ length: 3 }, (_, index) => (
+          <View
+            key={index}
+            style={[styles.line, { right: `${28 * (index + 1)}%` }]}
+          />
         ))}
       </ScrollView>
     );
@@ -153,8 +162,8 @@ const DayCalendarScreen = ({ route }: any) => {
           velocityThreshold: 0.3,
           directionalOffsetThreshold: 80,
         }}
-        onSwipeLeft={handleNextDay}
-        onSwipeRight={handlePrevDay}
+        onSwipeLeft={handleNextThreeDays}
+        onSwipeRight={handlePrevThreeDays}
         style={styles.root}
       >
         <Text style={styles.title}>{formattedDate}</Text>
@@ -164,7 +173,7 @@ const DayCalendarScreen = ({ route }: any) => {
   );
 };
 
-export default DayCalendarScreen;
+export default ThreeDaysCalendarScreen;
 
 const styles = StyleSheet.create({
   root: {
@@ -202,19 +211,33 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: Colors.secondary500,
   },
+  eventsWrapper: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  eventColumn: {
+    width: "28%",
+    padding: 4,
+  },
   eventContainer: {
     backgroundColor: Colors.primary,
     paddingVertical: 6,
     paddingHorizontal: 8,
     borderRadius: 4,
     marginTop: 4,
-    width: "85%",
-    alignSelf: "flex-end",
+    width: "100%",
   },
   eventText: {
     color: "#fff",
   },
   pressed: {
     opacity: 0.9,
+  },
+  line: {
+    position: "absolute",
+    width: 1,
+    height: "100%",
+    backgroundColor: Colors.gray300,
+    right: 0,
   },
 });

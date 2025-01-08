@@ -1,9 +1,11 @@
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { StyleSheet, View, Text, Dimensions, Pressable } from "react-native";
+import GestureRecognizer from "react-native-swipe-gestures";
 
-import IconButton from "../../components/UI/IconButton";
 import Colors from "../../constants/colors";
 import { events } from "./DayCalendarScreen";
+import { useSelector } from "react-redux";
+import { SettingsState } from "../../store/reducers/settings";
 
 const { height } = Dimensions.get("window");
 
@@ -11,7 +13,10 @@ const MonthCalendarScreen = ({ navigation }: any) => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [daysInMonth, setDaysInMonth] = useState<number[]>([]);
-  const [firstDayOfWeek, setFirstDayOfWeek] = useState(0);
+
+  const { firstDay } = useSelector(
+    (state: { settings: SettingsState }) => state.settings
+  );
 
   useLayoutEffect(() => {
     const daysInCurrentMonth = new Date(
@@ -19,17 +24,18 @@ const MonthCalendarScreen = ({ navigation }: any) => {
       selectedMonth + 1,
       0
     ).getDate();
-    const firstDay = new Date(selectedYear, selectedMonth, 1).getDay();
-
     setDaysInMonth(Array.from({ length: daysInCurrentMonth }, (_, i) => i + 1));
-    setFirstDayOfWeek(firstDay);
   }, [selectedMonth, selectedYear]);
 
   const renderDays = () => {
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+    // Adjust the order of days based on firstDay value
+    const adjustedDays = [...days.slice(firstDay), ...days.slice(0, firstDay)];
+
     return (
       <View style={styles.row}>
-        {days.map((day) => (
+        {adjustedDays.map((day) => (
           <Text key={day} style={styles.dayHeader}>
             {day}
           </Text>
@@ -38,29 +44,8 @@ const MonthCalendarScreen = ({ navigation }: any) => {
     );
   };
 
-  const handlePrevMonth = () => {
-    if (selectedMonth === 0) {
-      setSelectedMonth(11); // December
-      setSelectedYear(selectedYear - 1);
-    } else {
-      setSelectedMonth(selectedMonth - 1);
-    }
-  };
-
-  const handleNextMonth = () => {
-    if (selectedMonth === 11) {
-      setSelectedMonth(0); // January
-      setSelectedYear(selectedYear + 1);
-    } else {
-      setSelectedMonth(selectedMonth + 1);
-    }
-  };
-
-  const dateSelectHandler = (day: number) => {
-    navigation.navigate({
-      name: "Day",
-      params: { year: selectedYear, month: selectedMonth, day },
-    });
+  const convertDayNumber = (day: number) => {
+    return (day + 6) % 7;
   };
 
   const renderDates = () => {
@@ -68,9 +53,11 @@ const MonthCalendarScreen = ({ navigation }: any) => {
     const isCurrentMonthYearSelected =
       now.getFullYear() === selectedYear && now.getMonth() === selectedMonth;
 
-    const emptyDays = Array.from({ length: firstDayOfWeek }, (_, i) => (
-      <View key={`empty-${i}`} style={styles.emptyDay} />
-    ));
+    const firstDayInMonth = new Date(selectedYear, selectedMonth, 1).getDay(); // Sunday - Saturday : 0 - 6
+    const emptyDays = Array.from(
+      { length: convertDayNumber(firstDayInMonth - firstDay) },
+      (_, i) => <View key={`empty-${i}`} style={styles.emptyDay} />
+    );
 
     const dateCells = daysInMonth.map((date) => (
       <Pressable
@@ -112,7 +99,35 @@ const MonthCalendarScreen = ({ navigation }: any) => {
     );
   };
 
-  const options: any = { year: "numeric", month: "long" };
+  const handlePrevMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11); // December
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0); // January
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
+  };
+
+  const dateSelectHandler = (day: number) => {
+    navigation.navigate({
+      name: "Day",
+      params: { year: selectedYear, month: selectedMonth, day },
+    });
+  };
+
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "long",
+  };
   const formattedDate = new Date(
     selectedYear,
     selectedMonth,
@@ -121,13 +136,18 @@ const MonthCalendarScreen = ({ navigation }: any) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <IconButton icon="arrow-back" onPress={handlePrevMonth} />
+      <GestureRecognizer
+        config={{
+          velocityThreshold: 0.3,
+          directionalOffsetThreshold: 80,
+        }}
+        onSwipeLeft={handleNextMonth}
+        onSwipeRight={handlePrevMonth}
+      >
         <Text style={styles.title}>{formattedDate}</Text>
-        <IconButton icon="arrow-forward" onPress={handleNextMonth} />
-      </View>
-      {renderDays()}
-      {renderDates()}
+        {renderDays()}
+        {renderDates()}
+      </GestureRecognizer>
     </View>
   );
 };
@@ -142,16 +162,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    marginBottom: 12,
-  },
   title: {
     fontWeight: "bold",
     fontSize: 20,
+    textAlign: "center",
+    marginBottom: 12,
   },
   row: {
     flexDirection: "row",
