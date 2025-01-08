@@ -5,14 +5,30 @@ import GestureRecognizer from "react-native-swipe-gestures";
 import Colors from "../../constants/colors";
 
 export const events: any[] = [
-  { date: new Date(2025, 0, 2, 12, 30, 0), title: "Event", duration: 1 },
+  {
+    date: new Date(2025, 0, 2, 12, 30, 0),
+    title: "Event",
+    duration: 1,
+    color: "#551a61",
+  },
   {
     date: new Date(2025, 0, 2, 14, 20, 0),
     title: "Another test",
     duration: 2,
+    color: "#10592c",
   },
-  { date: new Date(2025, 0, 2, 14, 0, 0), title: "Test", duration: 1 },
-  { date: new Date(2025, 0, 4, 12, 30, 0), title: "Event-2", duration: 1 },
+  {
+    date: new Date(2025, 0, 2, 14, 0, 0),
+    title: "Test",
+    duration: 1,
+    color: "#235375",
+  },
+  {
+    date: new Date(2025, 0, 4, 12, 30, 0),
+    title: "Event-2",
+    duration: 1,
+    color: "#259494",
+  },
 ];
 
 const dateOptions: Intl.DateTimeFormatOptions = {
@@ -119,7 +135,10 @@ const DayCalendarScreen = ({ route }: any) => {
                   <View
                     style={[
                       styles.eventContainer,
-                      { height: 32 * event.duration },
+                      {
+                        height: 32 * event.duration,
+                        backgroundColor: event.color,
+                      },
                     ]}
                   >
                     <Text
@@ -203,7 +222,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.secondary500,
   },
   eventContainer: {
-    backgroundColor: Colors.primary,
     paddingVertical: 6,
     paddingHorizontal: 8,
     borderRadius: 4,

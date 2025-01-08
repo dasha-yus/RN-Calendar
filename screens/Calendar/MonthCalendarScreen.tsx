@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { StyleSheet, View, Text, Dimensions, Pressable } from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
 
@@ -81,7 +81,13 @@ const MonthCalendarScreen = ({ navigation }: any) => {
               (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
             )
             .map((event, idx) => (
-              <View key={idx} style={styles.eventContainer}>
+              <View
+                key={idx}
+                style={[
+                  styles.eventContainer,
+                  { backgroundColor: event.color },
+                ]}
+              >
                 <Text style={styles.eventText} numberOfLines={1}>
                   {event.title}
                 </Text>
@@ -207,7 +213,6 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
   eventContainer: {
-    backgroundColor: Colors.primary,
     padding: 4,
     borderRadius: 4,
     marginTop: 4,

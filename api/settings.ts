@@ -1,17 +1,21 @@
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { store } from "../store";
 import { SettingsState } from "./../store/reducers/settings";
 
-const token = store.getState().auth.token;
-const url = `${process.env.EXPO_PUBLIC_FIREBASE_DB_BASE_URL}/settings.json?key=${process.env.EXPO_PUBLIC_FIREBASE_API_KEY}&auth=${token}`;
+const url = `${process.env.EXPO_PUBLIC_FIREBASE_DB_BASE_URL}/settings.json`;
 
 export async function getAllSettings() {
-  const response = await axios.get(url);
+  const token =
+    store.getState().auth.token || (await AsyncStorage.getItem("token"));
+  const response = await axios.get(`${url}?auth=${token}`);
   return response.data;
 }
 
 export async function updateSettings(settings: SettingsState) {
-  const response = await axios.put(url, settings);
+  const token =
+    store.getState().auth.token || (await AsyncStorage.getItem("token"));
+  const response = await axios.put(`${url}?auth=${token}`, settings);
   return response.data;
 }

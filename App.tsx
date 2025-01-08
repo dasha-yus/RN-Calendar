@@ -20,6 +20,7 @@ import SettingsScreen from "./screens/SettingsScreen";
 import LoginScreen from "./screens/LoginScreen";
 import SignupScreen from "./screens/SignupScreen";
 import MonthCalendarScreen from "./screens/Calendar/MonthCalendarScreen";
+import WeekCalendarScreen from "./screens/Calendar/WeekCalendarScreen";
 import ThreeDaysCalendarScreen from "./screens/Calendar/ThreeDaysCalendarScreen";
 import DayCalendarScreen from "./screens/Calendar/DayCalendarScreen";
 import { store } from "./store";
@@ -73,7 +74,7 @@ function CalendarDrawer() {
       />
       <Drawer.Screen
         name="Week"
-        component={MonthCalendarScreen}
+        component={WeekCalendarScreen}
         options={{
           title: "Week",
           drawerIcon: ({ color, size }) => (
@@ -125,8 +126,11 @@ function AuthenticatedStack() {
       const expirationTime = +expiresIn * 1000; // Convert to milliseconds
       const timeout = expirationTime - 60000; // Refresh 1 minute before expiration
 
+      // const refreshTimeout = setTimeout(() => {
+      //   dispatch(refreshAccessToken(refreshToken));
+      // }, timeout);
       const refreshTimeout = setTimeout(() => {
-        dispatch(refreshAccessToken(refreshToken));
+        dispatch(logout());
       }, timeout);
 
       return () => clearTimeout(refreshTimeout);
