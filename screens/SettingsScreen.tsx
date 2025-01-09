@@ -6,6 +6,7 @@ import Toast from "react-native-toast-message";
 
 import { setSettings, SettingsState } from "../store/reducers/settings";
 import { updateSettings } from "../api/settings";
+import { AppDispatch } from "../store";
 import Colors from "../constants/colors";
 
 const days = [
@@ -22,7 +23,7 @@ const SettingsScreen = () => {
   const { firstDay } = useSelector(
     (state: { settings: SettingsState }) => state.settings
   );
-  const dispatch: any = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
 
   const [open, setOpen] = useState(false);
   const [firstDayValue, setFirstDayValue] = useState(0);

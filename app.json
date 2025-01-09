@@ -25,7 +25,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "The app accesses your camera to let you to take photos and attach them to events."
+        }
+      ]
     ]
   }
 }

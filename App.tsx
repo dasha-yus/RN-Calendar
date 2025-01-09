@@ -23,16 +23,16 @@ import MonthCalendarScreen from "./screens/Calendar/MonthCalendarScreen";
 import WeekCalendarScreen from "./screens/Calendar/WeekCalendarScreen";
 import ThreeDaysCalendarScreen from "./screens/Calendar/ThreeDaysCalendarScreen";
 import DayCalendarScreen from "./screens/Calendar/DayCalendarScreen";
-import { store } from "./store";
-import {
-  authenticate,
-  AuthState,
-  logout,
-  refreshAccessToken,
-} from "./store/reducers/auth";
+import AddEventScreen from "./screens/AddEvent";
+import { AppDispatch, store } from "./store";
+import { authenticate, AuthState, logout } from "./store/reducers/auth";
 import IconButton from "./components/UI/IconButton";
-import { getAllSettings } from "./api/settings";
 import { setSettings } from "./store/reducers/settings";
+import LoadingOverlay from "./components/UI/LoadingOverlay";
+import { getAllSettings } from "./api/settings";
+import { getAllEvents } from "./api/events";
+import { getAllNotifications } from "./api/notifications";
+import { setNotifications } from "./store/reducers/notifications";
 
 const BottomTab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -56,6 +56,10 @@ function CalendarDrawer() {
     <Drawer.Navigator
       screenOptions={{
         headerShown: false,
+        drawerActiveTintColor: Colors.secondary800,
+        drawerContentContainerStyle: { marginTop: -28 },
+        drawerType: "front",
+        swipeEnabled: false,
       }}
     >
       <Drawer.Screen
@@ -116,37 +120,53 @@ function CalendarDrawer() {
 
 function AuthenticatedStack() {
   const navigation = useNavigation<any>();
-  const dispatch: any = useDispatch();
-  const { refreshToken, expiresIn } = useSelector(
-    (state: { auth: AuthState }) => state.auth
-  );
+
+  const dispatch: AppDispatch = useDispatch();
+  // const { refreshToken, expiresIn } = useSelector(
+  //   (state: { auth: AuthState }) => state.auth
+  // );
+
+  const [isFetching, setIsFetching] = useState(true);
+
+  // useEffect(() => {
+  //   if (refreshToken) {
+  //     const expirationTime = +expiresIn * 1000; // Convert to milliseconds
+  //     const timeout = expirationTime - 60000; // Refresh 1 minute before expiration
+
+  //     const refreshTimeout = setTimeout(() => {
+  //       dispatch(refreshAccessToken(refreshToken));
+  //     }, timeout);
+
+  //     return () => clearTimeout(refreshTimeout);
+  //   }
+  // }, [refreshToken, expiresIn, dispatch]);
 
   useEffect(() => {
-    if (refreshToken) {
-      const expirationTime = +expiresIn * 1000; // Convert to milliseconds
-      const timeout = expirationTime - 60000; // Refresh 1 minute before expiration
+    setIsFetching(true);
 
-      // const refreshTimeout = setTimeout(() => {
-      //   dispatch(refreshAccessToken(refreshToken));
-      // }, timeout);
-      const refreshTimeout = setTimeout(() => {
-        dispatch(logout());
-      }, timeout);
-
-      return () => clearTimeout(refreshTimeout);
-    }
-  }, [refreshToken, expiresIn, dispatch]);
-
-  useEffect(() => {
-    const getSettings = async () => {
+    const fetchData = async () => {
       try {
         const settings = await getAllSettings();
         dispatch(setSettings({ firstDay: settings.firstDay }));
-      } catch (error) {}
+
+        // const events = await getAllEvents();
+        // dispatch(setEvents(events));
+
+        // const notifications = await getAllNotifications();
+        // dispatch(setNotifications({ notifications }));
+      } catch (error) {
+        // console.error("Error fetching data:", error);
+      } finally {
+        setIsFetching(false);
+      }
     };
 
-    getSettings().catch(console.error);
+    fetchData();
   }, []);
+
+  if (isFetching) {
+    return <LoadingOverlay message="Loading application data..." />;
+  }
 
   return (
     <BottomTab.Navigator
@@ -182,6 +202,16 @@ function AuthenticatedStack() {
         }}
       />
       <BottomTab.Screen
+        name="AddEvent"
+        component={AddEventScreen}
+        options={{
+          title: "New Event",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="add-circle" color={color} size={size} />
+          ),
+        }}
+      />
+      <BottomTab.Screen
         name="Settings"
         component={SettingsScreen}
         options={{
@@ -209,7 +239,7 @@ function Navigation() {
 function Root() {
   const [isTryingLogin, setIsTryingLogin] = useState(true);
 
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
     async function fetchToken() {

@@ -11,7 +11,7 @@ import Colors from "../../constants/colors";
 interface TextInputFieldProps {
   name: string;
   placeholder: string;
-  keyboardType: KeyboardTypeOptions;
+  keyboardType?: KeyboardTypeOptions;
   values: any;
   errors: any;
   handleChange: (field: string) => any;

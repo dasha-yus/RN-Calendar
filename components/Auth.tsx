@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   title: {
-    color: Colors.primary,
+    color: Colors.secondary800,
     textAlign: "center",
     fontSize: 36,
     marginTop: 24,
@@ -109,12 +109,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   subtitle: {
-    color: Colors.gray300,
+    color: Colors.primary,
     textAlign: "center",
     fontSize: 18,
   },
   link: {
-    color: Colors.primary,
+    color: Colors.secondary800,
     fontSize: 18,
   },
   pressed: {

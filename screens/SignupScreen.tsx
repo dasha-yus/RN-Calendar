@@ -10,7 +10,7 @@ import { createUser } from "../api/auth";
 import AuthContainer from "../components/Auth";
 import { authenticate } from "../store/reducers/auth";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 interface SignupScreenFormValues {
   email: string;

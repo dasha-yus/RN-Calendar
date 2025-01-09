@@ -72,16 +72,19 @@ const DayCalendarScreen = ({ route }: any) => {
   }, []);
 
   useEffect(() => {
-    const date = new Date(
-      route.params?.year,
-      route.params?.month,
-      route.params?.day
-    ).toLocaleDateString("en-US", dateOptions);
+    const dayNow = route.params ? route.params.day : now.getDate();
+    const monthNow = route.params ? route.params.month : now.getMonth();
+    const yearNow = route.params ? route.params.year : now.getFullYear();
+
+    const date = new Date(yearNow, monthNow, dayNow).toLocaleDateString(
+      "en-US",
+      dateOptions
+    );
     setFormattedDate(date);
 
-    setDay(route.params?.day);
-    setMonth(route.params?.month);
-    setYear(route.params?.year);
+    setDay(dayNow);
+    setMonth(monthNow);
+    setYear(yearNow);
   }, [route.params]);
 
   useEffect(() => {
