@@ -1,8 +1,15 @@
+import { useLayoutEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 
 import EventForm from "../components/Events/EventForm";
 
-const AddEventScreen = () => {
+const AddEventScreen = ({ navigation, route }: any) => {
+  useLayoutEffect(() => {
+    navigation.getParent().setOptions({
+      headerRight: () => null,
+    });
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Add event</Text>

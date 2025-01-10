@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
 import {
@@ -33,6 +33,7 @@ import { getAllSettings } from "./api/settings";
 import { getAllEvents } from "./api/events";
 import { getAllNotifications } from "./api/notifications";
 import { setNotifications } from "./store/reducers/notifications";
+import MapScreen from "./screens/Map";
 
 const BottomTab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -118,6 +119,23 @@ function CalendarDrawer() {
   );
 }
 
+function AddEventStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen
+        name="AddEvent"
+        component={AddEventScreen}
+        options={{ title: "New Event" }}
+      />
+      <Stack.Screen
+        name="Map"
+        component={MapScreen}
+        options={{ title: "Map" }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 function AuthenticatedStack() {
   const navigation = useNavigation<any>();
 
@@ -174,14 +192,6 @@ function AuthenticatedStack() {
         headerStyle: { backgroundColor: Colors.primary },
         headerTintColor: "white",
         tabBarActiveTintColor: Colors.primary,
-        headerRight: ({ tintColor }) => (
-          <IconButton
-            icon="exit-outline"
-            color={tintColor}
-            onPress={() => dispatch(logout())}
-            style={{ paddingRight: 16 }}
-          />
-        ),
       }}
     >
       <BottomTab.Screen
@@ -202,8 +212,8 @@ function AuthenticatedStack() {
         }}
       />
       <BottomTab.Screen
-        name="AddEvent"
-        component={AddEventScreen}
+        name="AddEventStack"
+        component={AddEventStack}
         options={{
           title: "New Event",
           tabBarIcon: ({ color, size }) => (
@@ -217,6 +227,14 @@ function AuthenticatedStack() {
         options={{
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings" color={color} size={size} />
+          ),
+          headerRight: ({ tintColor }) => (
+            <IconButton
+              icon="exit-outline"
+              color={tintColor}
+              onPress={() => dispatch(logout())}
+              style={{ paddingRight: 16 }}
+            />
           ),
         }}
       />

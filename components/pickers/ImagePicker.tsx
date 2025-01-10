@@ -11,7 +11,11 @@ import * as Picker from "expo-image-picker";
 import Colors from "../../constants/colors";
 import OutlinedButton from "../UI/OutlinedButton";
 
-function ImagePicker() {
+interface ImagePickerProps {
+  onTakeImage: (uri: string) => void;
+}
+
+function ImagePicker({ onTakeImage }: ImagePickerProps) {
   const [pickedImage, setPickedImage] = useState("");
 
   const [cameraPermissionInformation, requestPermission] =
@@ -50,7 +54,9 @@ function ImagePicker() {
     });
 
     if (!result.canceled) {
-      setPickedImage(result.assets[0].uri);
+      const imageUri = result.assets[0].uri;
+      setPickedImage(imageUri);
+      onTakeImage(imageUri);
     }
   }
 
@@ -68,7 +74,9 @@ function ImagePicker() {
     });
 
     if (!result.canceled) {
-      setPickedImage(result.assets[0].uri);
+      const imageUri = result.assets[0].uri;
+      setPickedImage(imageUri);
+      onTakeImage(imageUri);
     }
   }
 
@@ -81,7 +89,7 @@ function ImagePicker() {
   return (
     <View>
       <View style={styles.imagePreview}>{imagePreview}</View>
-      <View style={styles.btns}>
+      <View style={styles.actions}>
         <OutlinedButton icon="camera" onPress={takePicture}>
           Take Picture
         </OutlinedButton>
@@ -109,7 +117,8 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  btns: {
-    flexDirection: 'row',
-  }
+  actions: {
+    flexDirection: "row",
+    marginBottom: 10,
+  },
 });
