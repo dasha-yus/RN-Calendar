@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View, Text, ScrollView, Pressable } from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
+import { useNavigation } from "@react-navigation/native";
+import { useSelector } from "react-redux";
 
 import Colors from "../constants/colors";
-import { events } from "../screens/Calendar/DayCalendarScreen";
+import { EventsState } from "../store/reducers/events";
 
 interface CalendarProps {
   days: number;
@@ -12,6 +14,12 @@ interface CalendarProps {
 const Calendar = (props: CalendarProps) => {
   const { days } = props;
   const now = new Date();
+
+  const navigation = useNavigation<any>();
+
+  const { events } = useSelector(
+    (state: { events: EventsState }) => state.events
+  );
 
   const [day, setDay] = useState(now.getDate());
   const [month, setMonth] = useState(now.getMonth());
@@ -90,30 +98,34 @@ const Calendar = (props: CalendarProps) => {
           {events
             .filter(
               (event) =>
-                new Date(event.date).getDate() === currentDay &&
-                new Date(event.date).getHours() === hour
+                new Date(event.dateStart).getDate() === currentDay &&
+                new Date(event.dateStart).getHours() === hour
             )
             .sort(
-              (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+              (a, b) =>
+                new Date(a.dateStart).getTime() -
+                new Date(b.dateStart).getTime()
             )
-            .map((event, idx) => (
+            .map((event) => (
               <Pressable
-                key={idx}
+                key={event.id}
                 style={({ pressed }) => pressed && styles.pressed}
-                onPress={onEventSelected}
+                onPress={() => onEventSelected(event.id)}
               >
                 <View
                   style={[
                     styles.eventContainer,
                     {
-                      height: 32 * event.duration,
+                      // height: 32 * event.duration,
+                      height: 32,
                       backgroundColor: event.color,
                     },
                   ]}
                 >
                   <Text
                     style={styles.eventText}
-                    numberOfLines={event.duration > 1 ? 2 : 1}
+                    // numberOfLines={event.duration > 1 ? 2 : 1}
+                    numberOfLines={1}
                   >
                     {event.title}
                   </Text>
@@ -125,7 +137,12 @@ const Calendar = (props: CalendarProps) => {
     });
   };
 
-  const onEventSelected = () => {};
+  const onEventSelected = (id: string) => {
+    navigation.navigate("AddEventStack", {
+      screen: "AddEvent",
+      params: { eventId: id },
+    });
+  };
 
   const renderHours = () => {
     return (

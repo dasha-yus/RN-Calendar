@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Image, StyleSheet, Text, View } from "react-native";
 import {
   launchCameraAsync,
@@ -12,11 +12,16 @@ import Colors from "../../constants/colors";
 import OutlinedButton from "../UI/OutlinedButton";
 
 interface ImagePickerProps {
+  value: string;
   onTakeImage: (uri: string) => void;
 }
 
-function ImagePicker({ onTakeImage }: ImagePickerProps) {
-  const [pickedImage, setPickedImage] = useState("");
+function ImagePicker({ value, onTakeImage }: ImagePickerProps) {
+  const [pickedImage, setPickedImage] = useState(value || "");
+
+  useEffect(() => {
+    setPickedImage(value || "");
+  }, [value]);
 
   const [cameraPermissionInformation, requestPermission] =
     useCameraPermissions();

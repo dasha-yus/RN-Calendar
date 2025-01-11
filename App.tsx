@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View } from "react-native";
 import {
@@ -34,6 +34,7 @@ import { getAllEvents } from "./api/events";
 import { getAllNotifications } from "./api/notifications";
 import { setNotifications } from "./store/reducers/notifications";
 import MapScreen from "./screens/Map";
+import { setEvents } from "./store/reducers/events";
 
 const BottomTab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -125,7 +126,7 @@ function AddEventStack() {
       <Stack.Screen
         name="AddEvent"
         component={AddEventScreen}
-        options={{ title: "New Event" }}
+        options={{ title: "Event" }}
       />
       <Stack.Screen
         name="Map"
@@ -167,8 +168,8 @@ function AuthenticatedStack() {
         const settings = await getAllSettings();
         dispatch(setSettings({ firstDay: settings.firstDay }));
 
-        // const events = await getAllEvents();
-        // dispatch(setEvents(events));
+        const events = await getAllEvents();
+        dispatch(setEvents({ events }));
 
         // const notifications = await getAllNotifications();
         // dispatch(setNotifications({ notifications }));
@@ -215,10 +216,21 @@ function AuthenticatedStack() {
         name="AddEventStack"
         component={AddEventStack}
         options={{
-          title: "New Event",
+          title: "Event",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add-circle" color={color} size={size} />
+            <Ionicons
+              name="add-circle"
+              color={color}
+              size={size}
+              onPress={() => {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: "AddEventStack" }],
+                });
+              }}
+            />
           ),
+          tabBarLabel: "New Event",
         }}
       />
       <BottomTab.Screen

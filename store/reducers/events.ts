@@ -4,17 +4,17 @@ export interface Event {
   id: string;
   type: string;
   title: string;
-  dateStart: Date;
-  dateEnd: Date;
+  dateStart: string;
+  dateEnd: string;
   repeat: "daily" | "weekly" | "monthly";
   color: string;
-  description: string;
+  note: string;
   notifications: number[];
   location: {
     lat: number;
     lng: number;
     address: string;
-  };
+  } | null;
   imageUri: string;
 }
 
@@ -33,9 +33,12 @@ const eventsSlice = createSlice({
     setEvents: (state, action: PayloadAction<{ events: Event[] }>) => {
       state.events = action.payload.events;
     },
+    addEvent: (state, action: PayloadAction<Event>) => {
+      state.events = [...state.events, action.payload];
+    },
   },
 });
 
-export const { setEvents } = eventsSlice.actions;
+export const { setEvents, addEvent } = eventsSlice.actions;
 
 export default eventsSlice.reducer;

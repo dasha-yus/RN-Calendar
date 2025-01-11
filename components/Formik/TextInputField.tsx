@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   KeyboardTypeOptions,
+  Platform,
 } from "react-native";
 
 import Colors from "../../constants/colors";
@@ -16,6 +17,7 @@ interface TextInputFieldProps {
   errors: any;
   handleChange: (field: string) => any;
   handleBlur: (field: string) => any;
+  numberOfLines?: number;
   options?: object;
 }
 
@@ -27,19 +29,34 @@ const TextInputField = ({
   errors,
   handleChange,
   handleBlur,
+  numberOfLines = 1,
   options = {},
 }: TextInputFieldProps) => {
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          minHeight: 24 * numberOfLines,
+        },
+      ]}
+    >
       <TextInput
         onChangeText={handleChange(name)}
         onBlur={handleBlur(name)}
         value={values[name]}
         keyboardType={keyboardType}
-        style={styles.textInput}
+        style={[
+          styles.textInput,
+          {
+            minHeight: 24 * numberOfLines,
+          },
+        ]}
         autoCorrect={false}
         autoCapitalize="none"
         placeholder={placeholder}
+        numberOfLines={Platform.OS === "ios" ? undefined : numberOfLines}
+        textAlignVertical="top"
         {...options}
       />
       {errors[name] && <Text style={styles.error}>{errors[name]}</Text>}

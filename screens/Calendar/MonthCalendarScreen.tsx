@@ -3,9 +3,9 @@ import { StyleSheet, View, Text, Dimensions, Pressable } from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
 
 import Colors from "../../constants/colors";
-import { events } from "./DayCalendarScreen";
 import { useSelector } from "react-redux";
 import { SettingsState } from "../../store/reducers/settings";
+import { EventsState } from "../../store/reducers/events";
 
 const { height } = Dimensions.get("window");
 
@@ -16,6 +16,9 @@ const MonthCalendarScreen = ({ navigation }: any) => {
 
   const { firstDay } = useSelector(
     (state: { settings: SettingsState }) => state.settings
+  );
+  const { events } = useSelector(
+    (state: { events: EventsState }) => state.events
   );
 
   useLayoutEffect(() => {
@@ -75,10 +78,12 @@ const MonthCalendarScreen = ({ navigation }: any) => {
             .filter(
               (event) =>
                 isCurrentMonthYearSelected &&
-                new Date(event.date).getDate() === date
+                new Date(event.dateStart).getDate() === date
             )
             .sort(
-              (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+              (a, b) =>
+                new Date(a.dateStart).getTime() -
+                new Date(b.dateStart).getTime()
             )
             .map((event, idx) => (
               <View

@@ -3,33 +3,8 @@ import { StyleSheet, View, Text, ScrollView, Pressable } from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
 
 import Colors from "../../constants/colors";
-
-export const events: any[] = [
-  {
-    date: new Date(2025, 0, 2, 12, 30, 0),
-    title: "Event",
-    duration: 1,
-    color: "#551a61",
-  },
-  {
-    date: new Date(2025, 0, 2, 14, 20, 0),
-    title: "Another test",
-    duration: 2,
-    color: "#10592c",
-  },
-  {
-    date: new Date(2025, 0, 2, 14, 0, 0),
-    title: "Test",
-    duration: 1,
-    color: "#235375",
-  },
-  {
-    date: new Date(2025, 0, 4, 12, 30, 0),
-    title: "Event-2",
-    duration: 1,
-    color: "#259494",
-  },
-];
+import { useSelector } from "react-redux";
+import { Event, EventsState } from "../../store/reducers/events";
 
 const dateOptions: Intl.DateTimeFormatOptions = {
   weekday: "long",
@@ -38,8 +13,12 @@ const dateOptions: Intl.DateTimeFormatOptions = {
   day: "numeric",
 };
 
-const DayCalendarScreen = ({ route }: any) => {
+const DayCalendarScreen = ({ route, navigation }: any) => {
   const now = new Date();
+
+  const { events } = useSelector(
+    (state: { events: EventsState }) => state.events
+  );
 
   const [day, setDay] = useState(now.getDate());
   const [month, setMonth] = useState(now.getMonth());
@@ -109,7 +88,12 @@ const DayCalendarScreen = ({ route }: any) => {
     setYear(nextDate.getFullYear());
   };
 
-  const onEventSelected = () => {};
+  const onEventSelected = (id: string) => {
+    navigation.navigate("AddEventStack", {
+      screen: "AddEvent",
+      params: { eventId: id },
+    });
+  };
 
   const renderHours = () => {
     return (
@@ -122,31 +106,34 @@ const DayCalendarScreen = ({ route }: any) => {
             {events
               .filter(
                 (event) =>
-                  new Date(event.date).getDate() === day &&
-                  new Date(event.date).getHours() === index
+                  new Date(event.dateStart).getDate() === day &&
+                  new Date(event.dateStart).getHours() === index
               )
               .sort(
                 (a, b) =>
-                  new Date(a.date).getTime() - new Date(b.date).getTime()
+                  new Date(a.dateStart).getTime() -
+                  new Date(b.dateStart).getTime()
               )
-              .map((event, idx) => (
+              .map((event) => (
                 <Pressable
-                  key={idx}
+                  key={event.id}
                   style={({ pressed }) => pressed && styles.pressed}
-                  onPress={onEventSelected}
+                  onPress={() => onEventSelected(event.id)}
                 >
                   <View
                     style={[
                       styles.eventContainer,
                       {
-                        height: 32 * event.duration,
+                        // height: 32 * event.duration,
+                        height: 32,
                         backgroundColor: event.color,
                       },
                     ]}
                   >
                     <Text
                       style={styles.eventText}
-                      numberOfLines={event.duration > 1 ? 2 : 1}
+                      // numberOfLines={event.duration > 1 ? 2 : 1}
+                      numberOfLines={1}
                     >
                       {event.title}
                     </Text>
