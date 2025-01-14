@@ -18,7 +18,7 @@ export async function getAllEvents(): Promise<Event[]> {
       dateStart: response.data[key].event.dateStart,
       dateEnd: response.data[key].event.dateEnd,
       repeat: response.data[key].event.repeat,
-      // notifications: [...response.data[key].event.repeat],
+      notifications: response.data[key].event.notifications,
       imageUri: response.data[key].event.imageUri,
       location: response.data[key].event.location,
       color: response.data[key].event.color,

@@ -30,6 +30,10 @@ import {
   updateEvent,
 } from "../../store/reducers/events";
 import { createEvent, updateEventData } from "../../api/events";
+import NotificationPicker, {
+  notificationOptions,
+} from "../pickers/NotificationPicker";
+import { formatMinutes } from "../../utils/general";
 
 export const repeats = [
   { label: "None", value: "none" },
@@ -67,6 +71,9 @@ const EventForm: React.FC<EventFormProps> = ({ selectedEvent }) => {
   const [repeat, setRepeat] = useState<"daily" | "weekly" | "monthly" | "none">(
     "none"
   );
+  const [notifications, setNotifications] = useState<number[]>([]);
+  const [notificationPickerModalOpen, setNotificationPickerModalOpen] =
+    useState(false);
 
   useEffect(() => {
     LogBox.ignoreLogs(["VirtualizedLists should never be nested"]);
@@ -83,6 +90,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedEvent }) => {
     setSelectedImage(selectedEvent.imageUri || "");
     setPickedLocation(selectedEvent?.location || null);
     setSelectedColor(selectedEvent?.color || colors[colors.length - 2]);
+    setNotifications(selectedEvent?.notifications || []);
   }, [selectedEvent]);
 
   function takeImageHandler(imageUri: string) {
@@ -93,6 +101,12 @@ const EventForm: React.FC<EventFormProps> = ({ selectedEvent }) => {
     setPickedLocation(location);
   }, []);
 
+  const removeNotificationHandler = (notification: number) => {
+    setNotifications((prevState) =>
+      prevState.filter((n) => n !== notification)
+    );
+  };
+
   const onSubmit = async (values: EventFormValues) => {
     setIsSaving(true);
     try {
@@ -101,6 +115,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedEvent }) => {
         dateStart: startDate.toString(),
         dateEnd: endDate.toString(),
         repeat,
+        notifications,
         imageUri: selectedImage,
         color: selectedColor,
         location: pickedLocation,
@@ -177,6 +192,48 @@ const EventForm: React.FC<EventFormProps> = ({ selectedEvent }) => {
                   setItems={setRepeatOptions}
                 />
               </View>
+              <View style={styles.block}>
+                <View style={styles.header}>
+                  <View style={styles.label}>
+                    <Ionicons
+                      name="notifications"
+                      color={Colors.primary}
+                      size={20}
+                    />
+                    <Text style={styles.labelText}>Notifications</Text>
+                  </View>
+                  {notifications.length !== notificationOptions.length && (
+                    <Pressable
+                      style={({ pressed }) => [
+                        pressed && styles.pressed,
+                        styles.icon,
+                      ]}
+                      onPress={() => setNotificationPickerModalOpen(true)}
+                    >
+                      <Ionicons name="add" color={Colors.primary} size={20} />
+                    </Pressable>
+                  )}
+                </View>
+                <View>
+                  {notifications.map((n) => (
+                    <View key={n} style={styles.notification}>
+                      <Text style={styles.notificationText}>
+                        {formatMinutes(n)}
+                      </Text>
+                      <Pressable
+                        style={({ pressed }) => pressed && styles.pressed}
+                        onPress={() => removeNotificationHandler(n)}
+                      >
+                        <Ionicons
+                          name="close"
+                          color={Colors.primary}
+                          size={20}
+                        />
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              </View>
               <ImagePicker
                 value={selectedImage}
                 onTakeImage={takeImageHandler}
@@ -221,6 +278,14 @@ const EventForm: React.FC<EventFormProps> = ({ selectedEvent }) => {
         onClose={() => setColorPickerModalOpen(false)}
         onColorPicked={setSelectedColor}
       />
+      <NotificationPicker
+        modalVisible={notificationPickerModalOpen}
+        selectedNotifications={notifications}
+        onClose={() => setNotificationPickerModalOpen(false)}
+        onNotificationPicked={(n) =>
+          setNotifications([...notifications, n].sort((a, b) => a - b))
+        }
+      />
     </View>
   );
 };
@@ -263,6 +328,15 @@ const styles = StyleSheet.create({
   block: {
     marginBottom: 20,
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginVertical: 6,
+  },
+  icon: {
+    marginTop: -8,
+  },
   label: {
     flexDirection: "row",
     alignItems: "center",
@@ -273,5 +347,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 500,
     marginTop: -1,
+  },
+  notification: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  notificationText: {
+    fontSize: 16,
   },
 });
