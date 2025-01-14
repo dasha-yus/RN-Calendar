@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, StyleSheet, View } from "react-native";
+import { Button, StyleSheet, View, Text, Pressable } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import Toast from "react-native-toast-message";
 
@@ -8,6 +8,7 @@ import { setSettings, SettingsState } from "../store/reducers/settings";
 import { updateSettings } from "../api/settings";
 import { AppDispatch } from "../store";
 import Colors from "../constants/colors";
+import ColorPicker from "../components/pickers/ColorPicker";
 
 const days = [
   { label: "Monday", value: 0 },
@@ -20,7 +21,7 @@ const days = [
 ];
 
 const SettingsScreen = () => {
-  const { firstDay } = useSelector(
+  const { firstDay, notificationsDefaultColor } = useSelector(
     (state: { settings: SettingsState }) => state.settings
   );
   const dispatch: AppDispatch = useDispatch();
@@ -29,6 +30,8 @@ const SettingsScreen = () => {
   const [firstDayValue, setFirstDayValue] = useState(0);
   const [items, setItems] = useState(days);
   const [isSaving, setIsSaving] = useState(false);
+  const [colorPickerModalOpen, setColorPickerModalOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(notificationsDefaultColor);
 
   useEffect(() => {
     setFirstDayValue(firstDay);
@@ -37,13 +40,19 @@ const SettingsScreen = () => {
   const onSave = async () => {
     try {
       setIsSaving(true);
-      await updateSettings({ firstDay: firstDayValue });
-      dispatch(setSettings({ firstDay: firstDayValue }));
+      await updateSettings({
+        firstDay: firstDayValue,
+        notificationsDefaultColor: selectedColor,
+      });
+      dispatch(
+        setSettings({
+          firstDay: firstDayValue,
+          notificationsDefaultColor: selectedColor,
+        })
+      );
       Toast.show({
         type: "success",
-        text1: `First day of the week set to ${
-          days.find((day) => day.value === firstDayValue)?.label
-        }`,
+        text1: "Settings updated successfully",
         autoHide: true,
         visibilityTime: 5000,
         topOffset: 50,
@@ -56,15 +65,35 @@ const SettingsScreen = () => {
 
   return (
     <View style={styles.container}>
-      <DropDownPicker
-        open={open}
-        value={firstDayValue}
-        items={items}
-        setOpen={setOpen}
-        setValue={setFirstDayValue}
-        setItems={setItems}
-        placeholder="Select first day of the week"
-      />
+      <View>
+        <View>
+          <Text style={styles.label}>First day of the week</Text>
+          <DropDownPicker
+            open={open}
+            value={firstDayValue}
+            items={items}
+            setOpen={setOpen}
+            setValue={setFirstDayValue}
+            setItems={setItems}
+            placeholder="Select first day of the week"
+          />
+        </View>
+        <Pressable
+          style={({ pressed }) => pressed && styles.pressed}
+          onPress={() => setColorPickerModalOpen(true)}
+        >
+          <View style={styles.colorBox}>
+            <Text>Default notifications color</Text>
+            <View style={[styles.color, { backgroundColor: selectedColor }]} />
+          </View>
+        </Pressable>
+        <ColorPicker
+          modalVisible={colorPickerModalOpen}
+          selectedColor={selectedColor}
+          onClose={() => setColorPickerModalOpen(false)}
+          onColorPicked={setSelectedColor}
+        />
+      </View>
       <View>
         <Button
           onPress={onSave}
@@ -85,5 +114,29 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 16,
     justifyContent: "space-between",
+  },
+  label: {
+    marginBottom: 5,
+  },
+  colorBox: {
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 4,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  color: {
+    width: 20,
+    height: 20,
+    borderRadius: "50%",
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  pressed: {
+    opacity: 0.75,
   },
 });

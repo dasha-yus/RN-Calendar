@@ -13,9 +13,9 @@ export async function getAllNotifications() {
     const notificationObj = {
       id: key,
       type: "notification",
-      text: response.data[key].text,
-      date: new Date(response.data[key].date),
-      repeat: response.data[key].repeat,
+      text: response.data[key].notification.text,
+      date: new Date(response.data[key].notification.date),
+      repeat: response.data[key].notification.repeat,
     };
     notifications.push(notificationObj);
   }

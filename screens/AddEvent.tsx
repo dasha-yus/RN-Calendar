@@ -1,11 +1,14 @@
 import { useEffect, useLayoutEffect, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { useSelector } from "react-redux";
+import { View, Text, StyleSheet, Alert } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
 
 import EventForm from "../components/Events/EventForm";
-import { Event, EventsState } from "../store/reducers/events";
+import { Event, EventsState, removeEvent } from "../store/reducers/events";
+import IconButton from "../components/UI/IconButton";
+import { deleteEvent } from "../api/events";
 
 const AddEventScreen = ({ navigation, route }: any) => {
+  const dispatch = useDispatch();
   const { events } = useSelector(
     (state: { events: EventsState }) => state.events
   );
@@ -32,8 +35,41 @@ const AddEventScreen = ({ navigation, route }: any) => {
 
     navigation.getParent().setOptions({
       title: `Update event '${event?.title}'`,
+      headerRight: ({ tintColor }: any) => (
+        <IconButton
+          icon="trash"
+          color={tintColor}
+          onPress={removeEventHandler}
+          style={{ paddingRight: 16, marginTop: 3 }}
+        />
+      ),
     });
   }, [navigation, route]);
+
+  const removeEventHandler = () => {
+    Alert.alert(
+      "Delete event",
+      "Are you sure you want to delete event?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Confirm",
+          onPress: async () => {
+            try {
+              const eventId = route.params?.eventId;
+              await deleteEvent(eventId);
+              dispatch(removeEvent({ id: eventId }));
+              navigation.navigate("Calendar");
+            } catch (error) {}
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
 
   return (
     <View style={styles.container}>

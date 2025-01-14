@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 
 import Colors from "../constants/colors";
 import { EventsState } from "../store/reducers/events";
+import { getDaysDifference, getHoursDifference } from "../utils/date";
 
 interface CalendarProps {
   days: number;
@@ -96,42 +97,73 @@ const Calendar = (props: CalendarProps) => {
           style={[styles.eventColumn, { width: `${100 / (days + 1)}%` }]}
         >
           {events
-            .filter(
-              (event) =>
-                new Date(event.dateStart).getDate() === currentDay &&
+            .filter((event) => {
+              const startDate = new Date(event.dateStart);
+              const endDate = new Date(event.dateEnd);
+              const selectedDate = new Date(year, month, currentDay);
+
+              const diffDays = getDaysDifference(startDate, endDate);
+
+              // If the event lasts more than a day, check if the selected date is within the range
+              if (diffDays > 1) {
+                return (
+                  selectedDate >= startDate &&
+                  selectedDate <= endDate &&
+                  new Date(event.dateStart).getHours() === hour
+                );
+              }
+
+              return (
+                ((event.repeat === "none" &&
+                  new Date(event.dateStart).getDate() === currentDay) ||
+                  event.repeat === "daily" ||
+                  (event.repeat === "weekly" &&
+                    new Date(event.dateStart).getDay() ===
+                      new Date(year, month, currentDay).getDay()) ||
+                  (event.repeat === "monthly" &&
+                    new Date(year, month, currentDay).getMonth() === month &&
+                    new Date(event.dateStart).getDate() === currentDay)) &&
                 new Date(event.dateStart).getHours() === hour
-            )
+              );
+            })
             .sort(
               (a, b) =>
                 new Date(a.dateStart).getTime() -
                 new Date(b.dateStart).getTime()
             )
-            .map((event) => (
-              <Pressable
-                key={event.id}
-                style={({ pressed }) => pressed && styles.pressed}
-                onPress={() => onEventSelected(event.id)}
-              >
-                <View
-                  style={[
-                    styles.eventContainer,
-                    {
-                      // height: 32 * event.duration,
-                      height: 32,
-                      backgroundColor: event.color,
-                    },
-                  ]}
+            .map((event) => {
+              const duration = getHoursDifference(
+                event.dateStart,
+                event.dateEnd
+              );
+              return (
+                <Pressable
+                  key={event.id}
+                  style={({ pressed }) => pressed && styles.pressed}
+                  onPress={() => onEventSelected(event.id)}
                 >
-                  <Text
-                    style={styles.eventText}
-                    // numberOfLines={event.duration > 1 ? 2 : 1}
-                    numberOfLines={1}
+                  <View
+                    style={[
+                      styles.eventContainer,
+                      {
+                        height:
+                          32 * (duration < 1 ? 1 : duration > 4 ? 5 : duration),
+                        backgroundColor: event.color,
+                      },
+                    ]}
                   >
-                    {event.title}
-                  </Text>
-                </View>
-              </Pressable>
-            ))}
+                    <Text
+                      style={styles.eventText}
+                      numberOfLines={
+                        duration < 1 ? 1 : duration > 4 ? 5 : duration
+                      }
+                    >
+                      {event.title}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
         </View>
       );
     });

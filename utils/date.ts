@@ -13,3 +13,21 @@ export const formatDate = (date: Date) => {
 
   return `${day}.${month}.${year}`;
 };
+
+export const getHoursDifference = (
+  date1: Date | string,
+  date2: Date | string
+) => {
+  const diff = new Date(date2).valueOf() - new Date(date1).valueOf();
+  const diffInHours = diff / (1000 * 60 * 60);
+  return diffInHours;
+};
+
+export const getDaysDifference = (
+  date1: Date | string,
+  date2: Date | string
+) => {
+  const diff = new Date(date2).valueOf() - new Date(date1).valueOf();
+  const diffDays = diff / (1000 * 60 * 60 * 24);
+  return diffDays;
+};

@@ -5,7 +5,7 @@ export interface Notification {
   type: string;
   text: string;
   date: Date;
-  repeat: "daily" | "weekly" | "monthly";
+  repeat: "daily" | "weekly" | "monthly" | "none";
 }
 
 export interface NotificationsState {

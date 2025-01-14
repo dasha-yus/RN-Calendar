@@ -1,11 +1,12 @@
 import { useLayoutEffect, useState } from "react";
-import { StyleSheet, View, Text, Dimensions, Pressable } from "react-native";
+import { StyleSheet, View, Text, Dimensions, Pressable, ScrollView } from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
 
 import Colors from "../../constants/colors";
 import { useSelector } from "react-redux";
 import { SettingsState } from "../../store/reducers/settings";
 import { EventsState } from "../../store/reducers/events";
+import { getDaysDifference } from "../../utils/date";
 
 const { height } = Dimensions.get("window");
 
@@ -75,11 +76,31 @@ const MonthCalendarScreen = ({ navigation }: any) => {
         <View>
           <Text>{date}</Text>
           {events
-            .filter(
-              (event) =>
-                isCurrentMonthYearSelected &&
-                new Date(event.dateStart).getDate() === date
-            )
+            .filter((event) => {
+              const startDate = new Date(event.dateStart);
+              const endDate = new Date(event.dateEnd);
+              const selectedDate = new Date(selectedYear, selectedMonth, date);
+
+              const diffDays = getDaysDifference(startDate, endDate);
+
+              // If the event lasts more than a day, check if the selected date is within the range
+              if (diffDays > 1) {
+                return selectedDate >= startDate && selectedDate <= endDate;
+              }
+
+              if (event.repeat === "weekly") {
+                return startDate.getDay() === selectedDate.getDay();
+              } else if (event.repeat === "monthly") {
+                return startDate.getDate() === selectedDate.getDate();
+              } else {
+                return (
+                  event.repeat === "daily" ||
+                  (startDate.getDate() === selectedDate.getDate() &&
+                    startDate.getMonth() === selectedDate.getMonth() &&
+                    startDate.getFullYear() === selectedDate.getFullYear())
+                );
+              }
+            })
             .sort(
               (a, b) =>
                 new Date(a.dateStart).getTime() -

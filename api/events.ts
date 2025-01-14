@@ -17,7 +17,7 @@ export async function getAllEvents(): Promise<Event[]> {
       title: response.data[key].event.title,
       dateStart: response.data[key].event.dateStart,
       dateEnd: response.data[key].event.dateEnd,
-      // repeat: response.data[key].event.repeat,
+      repeat: response.data[key].event.repeat,
       // notifications: [...response.data[key].event.repeat],
       imageUri: response.data[key].event.imageUri,
       location: response.data[key].event.location,
@@ -41,4 +41,24 @@ export async function createEvent(event: Partial<Event>): Promise<Event> {
   };
   // @ts-ignore
   return res;
+}
+
+export async function deleteEvent(id: string): Promise<Event> {
+  const token = store.getState().auth.token;
+  const response = await AxiosInstance.delete(
+    `${process.env.EXPO_PUBLIC_FIREBASE_DB_BASE_URL}/events/${id}.json?auth=${token}`
+  );
+  return response.data;
+}
+
+export async function updateEventData(
+  id: string,
+  event: Partial<Event>
+): Promise<Event> {
+  const token = store.getState().auth.token;
+  const response = await AxiosInstance.put(
+    `${process.env.EXPO_PUBLIC_FIREBASE_DB_BASE_URL}/events/${id}.json?auth=${token}`,
+    { event }
+  );
+  return response.data;
 }

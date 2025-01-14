@@ -166,7 +166,12 @@ function AuthenticatedStack() {
     const fetchData = async () => {
       try {
         const settings = await getAllSettings();
-        dispatch(setSettings({ firstDay: settings.firstDay }));
+        dispatch(
+          setSettings({
+            firstDay: settings.firstDay,
+            notificationsDefaultColor: settings.notificationsDefaultColor,
+          })
+        );
 
         const events = await getAllEvents();
         dispatch(setEvents({ events }));

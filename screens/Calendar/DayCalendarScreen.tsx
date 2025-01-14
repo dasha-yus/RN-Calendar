@@ -5,6 +5,7 @@ import GestureRecognizer from "react-native-swipe-gestures";
 import Colors from "../../constants/colors";
 import { useSelector } from "react-redux";
 import { Event, EventsState } from "../../store/reducers/events";
+import { getDaysDifference, getHoursDifference } from "../../utils/date";
 
 const dateOptions: Intl.DateTimeFormatOptions = {
   weekday: "long",
@@ -104,42 +105,72 @@ const DayCalendarScreen = ({ route, navigation }: any) => {
               {index.toString().length === 1 ? `0${index}` : index}:00
             </Text>
             {events
-              .filter(
-                (event) =>
-                  new Date(event.dateStart).getDate() === day &&
+              .filter((event) => {
+                const startDate = new Date(event.dateStart);
+                const endDate = new Date(event.dateEnd);
+                const selectedDate = new Date(year, month, day);
+
+                const diffDays = getDaysDifference(startDate, endDate);
+
+                // If the event lasts more than a day, check if the selected date is within the range
+                if (diffDays > 1) {
+                  return (
+                    selectedDate >= startDate &&
+                    selectedDate <= endDate &&
+                    new Date(event.dateStart).getHours() === index
+                  );
+                }
+
+                return (
+                  (new Date(event.dateStart).getDate() === day ||
+                    event.repeat === "daily" ||
+                    (event.repeat === "weekly" &&
+                      new Date(event.dateStart).getDay() ===
+                        new Date(year, month, day).getDay()) ||
+                    (event.repeat === "monthly" &&
+                      new Date(event.dateStart).getDate() === day)) &&
                   new Date(event.dateStart).getHours() === index
-              )
+                );
+              })
               .sort(
                 (a, b) =>
                   new Date(a.dateStart).getTime() -
                   new Date(b.dateStart).getTime()
               )
-              .map((event) => (
-                <Pressable
-                  key={event.id}
-                  style={({ pressed }) => pressed && styles.pressed}
-                  onPress={() => onEventSelected(event.id)}
-                >
-                  <View
-                    style={[
-                      styles.eventContainer,
-                      {
-                        // height: 32 * event.duration,
-                        height: 32,
-                        backgroundColor: event.color,
-                      },
-                    ]}
+              .map((event) => {
+                const duration = getHoursDifference(
+                  event.dateStart,
+                  event.dateEnd
+                );
+                return (
+                  <Pressable
+                    key={event.id}
+                    style={({ pressed }) => pressed && styles.pressed}
+                    onPress={() => onEventSelected(event.id)}
                   >
-                    <Text
-                      style={styles.eventText}
-                      // numberOfLines={event.duration > 1 ? 2 : 1}
-                      numberOfLines={1}
+                    <View
+                      style={[
+                        styles.eventContainer,
+                        {
+                          height:
+                            32 *
+                            (duration < 1 ? 1 : duration > 4 ? 5 : duration),
+                          backgroundColor: event.color,
+                        },
+                      ]}
                     >
-                      {event.title}
-                    </Text>
-                  </View>
-                </Pressable>
-              ))}
+                      <Text
+                        style={styles.eventText}
+                        numberOfLines={
+                          duration < 1 ? 1 : duration > 4 ? 5 : duration
+                        }
+                      >
+                        {event.title}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
             {index === currentHour && (
               <View
                 ref={targetRef}

@@ -7,11 +7,14 @@ import {
   Pressable,
   SafeAreaView,
   Alert,
+  LogBox,
 } from "react-native";
 import { useCallback, useEffect, useState } from "react";
 import { Formik } from "formik";
 import { useDispatch } from "react-redux";
 import { useNavigation } from "@react-navigation/native";
+import DropDownPicker from "react-native-dropdown-picker";
+import { Ionicons } from "@expo/vector-icons";
 
 import Colors from "../../constants/colors";
 import TextInputField from "../Formik/TextInputField";
@@ -24,8 +27,16 @@ import {
   addEvent,
   Event,
   Event as EventType,
+  updateEvent,
 } from "../../store/reducers/events";
-import { createEvent } from "../../api/events";
+import { createEvent, updateEventData } from "../../api/events";
+
+export const repeats = [
+  { label: "None", value: "none" },
+  { label: "Daily", value: "daily" },
+  { label: "Weekly", value: "weekly" },
+  { label: "Monthly", value: "monthly" },
+];
 
 interface EventFormProps {
   selectedEvent?: Event;
@@ -46,26 +57,32 @@ const EventForm: React.FC<EventFormProps> = ({ selectedEvent }) => {
 
   const [isSaving, setIsSaving] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
-  const [pickedLocation, setPickedLocation] = useState(
-    selectedEvent?.location || null
-  );
+  const [pickedLocation, setPickedLocation] = useState<any>(null);
   const [colorPickerModalOpen, setColorPickerModalOpen] = useState(false);
-  const [selectedColor, setSelectedColor] = useState(
-    selectedEvent?.color || colors[colors.length - 2]
+  const [selectedColor, setSelectedColor] = useState(colors[colors.length - 2]);
+  const [startDate, setStartDate] = useState<any>(now);
+  const [endDate, setEndDate] = useState<any>(nowPlusHour);
+  const [repeatDropdownOpen, setRepeatDropdownOpen] = useState(false);
+  const [repeatOptions, setRepeatOptions] = useState(repeats);
+  const [repeat, setRepeat] = useState<"daily" | "weekly" | "monthly" | "none">(
+    "none"
   );
-  const [startDate, setStartDate] = useState(
-    new Date(selectedEvent?.dateStart || now)
-  );
-  const [endDate, setEndDate] = useState(
-    new Date(selectedEvent?.dateEnd || nowPlusHour)
-  );
+
+  useEffect(() => {
+    LogBox.ignoreLogs(["VirtualizedLists should never be nested"]);
+  }, []);
 
   useEffect(() => {
     if (!selectedEvent) {
       return;
     }
 
+    setStartDate(selectedEvent?.dateStart || now);
+    setEndDate(selectedEvent?.dateEnd || nowPlusHour);
+    setRepeat(selectedEvent.repeat);
     setSelectedImage(selectedEvent.imageUri || "");
+    setPickedLocation(selectedEvent?.location || null);
+    setSelectedColor(selectedEvent?.color || colors[colors.length - 2]);
   }, [selectedEvent]);
 
   function takeImageHandler(imageUri: string) {
@@ -83,13 +100,19 @@ const EventForm: React.FC<EventFormProps> = ({ selectedEvent }) => {
         title: values.title,
         dateStart: startDate.toString(),
         dateEnd: endDate.toString(),
+        repeat,
         imageUri: selectedImage,
         color: selectedColor,
         location: pickedLocation,
         note: values.note,
       };
-      const res: EventType = await createEvent(event);
-      dispatch(addEvent(res));
+      if (!!selectedEvent) {
+        await updateEventData(selectedEvent.id, event);
+        dispatch(updateEvent({ id: selectedEvent.id, updatedEvent: event }));
+      } else {
+        const res: EventType = await createEvent(event);
+        dispatch(addEvent(res));
+      }
       navigation.navigate("Calendar");
     } catch (error) {
       Alert.alert("Saving failed", "Could not save event data");
@@ -134,12 +157,26 @@ const EventForm: React.FC<EventFormProps> = ({ selectedEvent }) => {
               <SafeAreaView>
                 <DatePicker
                   label="Select dates range"
-                  dateStart={startDate}
+                  dateStart={new Date(startDate)}
                   onStartDateChange={(date) => setStartDate(date)}
-                  dateEnd={endDate}
+                  dateEnd={new Date(endDate)}
                   onEndDateChange={(date) => setEndDate(date)}
                 />
               </SafeAreaView>
+              <View style={styles.block}>
+                <View style={styles.label}>
+                  <Ionicons name="repeat" color={Colors.primary} size={20} />
+                  <Text style={styles.labelText}>Repeat</Text>
+                </View>
+                <DropDownPicker
+                  open={repeatDropdownOpen}
+                  value={repeat}
+                  items={repeatOptions}
+                  setOpen={setRepeatDropdownOpen}
+                  setValue={setRepeat}
+                  setItems={setRepeatOptions}
+                />
+              </View>
               <ImagePicker
                 value={selectedImage}
                 onTakeImage={takeImageHandler}
@@ -222,5 +259,19 @@ const styles = StyleSheet.create({
   },
   actions: {
     marginTop: 10,
+  },
+  block: {
+    marginBottom: 20,
+  },
+  label: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 10,
+  },
+  labelText: {
+    fontSize: 18,
+    fontWeight: 500,
+    marginTop: -1,
   },
 });

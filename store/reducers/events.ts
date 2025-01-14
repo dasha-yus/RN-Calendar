@@ -6,7 +6,7 @@ export interface Event {
   title: string;
   dateStart: string;
   dateEnd: string;
-  repeat: "daily" | "weekly" | "monthly";
+  repeat: "daily" | "weekly" | "monthly" | "none";
   color: string;
   note: string;
   notifications: number[];
@@ -36,9 +36,27 @@ const eventsSlice = createSlice({
     addEvent: (state, action: PayloadAction<Event>) => {
       state.events = [...state.events, action.payload];
     },
+    removeEvent: (state, action: PayloadAction<{ id: string }>) => {
+      state.events = state.events.filter((e) => e.id !== action.payload.id);
+    },
+    updateEvent: (
+      state,
+      action: PayloadAction<{ id: string; updatedEvent: Partial<Event> }>
+    ) => {
+      const { id, updatedEvent } = action.payload;
+      const eventIndex = state.events.findIndex((e) => e.id === id);
+
+      if (eventIndex !== -1) {
+        state.events[eventIndex] = {
+          ...state.events[eventIndex],
+          ...updatedEvent,
+        };
+      }
+    },
   },
 });
 
-export const { setEvents, addEvent } = eventsSlice.actions;
+export const { setEvents, addEvent, removeEvent, updateEvent } =
+  eventsSlice.actions;
 
 export default eventsSlice.reducer;
