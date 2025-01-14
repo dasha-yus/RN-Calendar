@@ -31,6 +31,16 @@
         {
           "cameraPermission": "The app accesses your camera to let you to take photos and attach them to events."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./local/assets/icon.png",
+          "color": "#ffffff",
+          "defaultChannel": "default",
+          "sounds": ["./local/assets/sounds/notification_sound.wav"],
+          "enableBackgroundRemoteNotifications": false
+        }
       ]
     ]
   }

@@ -14,6 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AppLoading from "expo-app-loading";
 import Toast from "react-native-toast-message";
+import * as Notifications from "expo-notifications";
 
 import Colors from "./constants/colors";
 import SettingsScreen from "./screens/SettingsScreen";
@@ -34,7 +35,18 @@ import { getAllEvents } from "./api/events";
 import { getAllNotifications } from "./api/notifications";
 import { setNotifications } from "./store/reducers/notifications";
 import MapScreen from "./screens/Map";
-import { setEvents } from "./store/reducers/events";
+import { Event, setEvents } from "./store/reducers/events";
+import { scheduleEventNotifications } from "./utils/notifications";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => {
+    return {
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowAlert: true,
+    };
+  },
+});
 
 const BottomTab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -175,6 +187,9 @@ function AuthenticatedStack() {
 
         const events = await getAllEvents();
         dispatch(setEvents({ events }));
+        for (const event of events) {
+          await scheduleEventNotifications(event);
+        }
 
         // const notifications = await getAllNotifications();
         // dispatch(setNotifications({ notifications }));
@@ -186,6 +201,22 @@ function AuthenticatedStack() {
     };
 
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const subsciption = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const eventId = response.notification.request.content.data.eventId;
+        navigation.navigate("AddEventStack", {
+          screen: "AddEvent",
+          params: { eventId },
+        });
+      }
+    );
+
+    return () => {
+      subsciption.remove();
+    };
   }, []);
 
   if (isFetching) {

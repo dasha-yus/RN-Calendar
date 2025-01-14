@@ -34,6 +34,7 @@ import NotificationPicker, {
   notificationOptions,
 } from "../pickers/NotificationPicker";
 import { formatMinutes } from "../../utils/general";
+import { scheduleEventNotifications } from "../../utils/notifications";
 
 export const repeats = [
   { label: "None", value: "none" },
@@ -71,7 +72,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedEvent }) => {
   const [repeat, setRepeat] = useState<"daily" | "weekly" | "monthly" | "none">(
     "none"
   );
-  const [notifications, setNotifications] = useState<number[]>([]);
+  const [notifications, setNotifications] = useState<number[]>([10]);
   const [notificationPickerModalOpen, setNotificationPickerModalOpen] =
     useState(false);
 
@@ -121,13 +122,25 @@ const EventForm: React.FC<EventFormProps> = ({ selectedEvent }) => {
         location: pickedLocation,
         note: values.note,
       };
+
+      let eventId;
       if (!!selectedEvent) {
         await updateEventData(selectedEvent.id, event);
+        eventId = selectedEvent.id;
         dispatch(updateEvent({ id: selectedEvent.id, updatedEvent: event }));
       } else {
         const res: EventType = await createEvent(event);
+        eventId = res.id;
         dispatch(addEvent(res));
       }
+
+      if (!!notifications.length) {
+        await scheduleEventNotifications({
+          ...event,
+          id: eventId,
+        });
+      }
+
       navigation.navigate("Calendar");
     } catch (error) {
       Alert.alert("Saving failed", "Could not save event data");
