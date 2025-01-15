@@ -5,8 +5,13 @@ import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
 
 import Colors from "../constants/colors";
-import { EventsState } from "../store/reducers/events";
+import { Event, EventsState } from "../store/reducers/events";
 import { getDaysDifference, getHoursDifference } from "../utils/date";
+import { SettingsState } from "../store/reducers/settings";
+import {
+  Notification,
+  NotificationsState,
+} from "../store/reducers/notifications";
 
 interface CalendarProps {
   days: number;
@@ -18,8 +23,14 @@ const Calendar = (props: CalendarProps) => {
 
   const navigation = useNavigation<any>();
 
+  const { notificationsDefaultColor } = useSelector(
+    (state: { settings: SettingsState }) => state.settings
+  );
   const { events } = useSelector(
     (state: { events: EventsState }) => state.events
+  );
+  const { notifications } = useSelector(
+    (state: { notifications: NotificationsState }) => state.notifications
   );
 
   const [day, setDay] = useState(now.getDate());
@@ -96,51 +107,61 @@ const Calendar = (props: CalendarProps) => {
           key={index}
           style={[styles.eventColumn, { width: `${100 / (days + 1)}%` }]}
         >
-          {events
+          {[...events, ...notifications]
             .filter((event) => {
-              const startDate = new Date(event.dateStart);
-              const endDate = new Date(event.dateEnd);
-              const selectedDate = new Date(year, month, currentDay);
+              const startDate =
+                event.type === "event"
+                  ? new Date((event as Event).dateStart)
+                  : new Date((event as Notification).date);
 
-              const diffDays = getDaysDifference(startDate, endDate);
+              if (event.type === "event") {
+                const endDate = new Date((event as Event).dateEnd);
+                const selectedDate = new Date(year, month, currentDay);
 
-              // If the event lasts more than a day, check if the selected date is within the range
-              if (diffDays > 1) {
-                return (
-                  selectedDate >= startDate &&
-                  selectedDate <= endDate &&
-                  new Date(event.dateStart).getHours() === hour
-                );
+                const diffDays = getDaysDifference(startDate, endDate);
+
+                // If the event lasts more than a day, check if the selected date is within the range
+                if (diffDays > 1) {
+                  return (
+                    selectedDate >= startDate &&
+                    selectedDate <= endDate &&
+                    startDate.getHours() === hour
+                  );
+                }
               }
 
               return (
                 ((event.repeat === "none" &&
-                  new Date(event.dateStart).getDate() === currentDay) ||
+                  startDate.getDate() === currentDay) ||
                   event.repeat === "daily" ||
                   (event.repeat === "weekly" &&
-                    new Date(event.dateStart).getDay() ===
+                    startDate.getDay() ===
                       new Date(year, month, currentDay).getDay()) ||
                   (event.repeat === "monthly" &&
                     new Date(year, month, currentDay).getMonth() === month &&
-                    new Date(event.dateStart).getDate() === currentDay)) &&
-                new Date(event.dateStart).getHours() === hour
+                    startDate.getDate() === currentDay)) &&
+                startDate.getHours() === hour
               );
             })
-            .sort(
-              (a, b) =>
-                new Date(a.dateStart).getTime() -
-                new Date(b.dateStart).getTime()
+            .sort((a, b) =>
+              a.type === "event"
+                ? new Date((a as Event).dateStart).getTime() -
+                  new Date((b as Event).dateStart).getTime()
+                : 0
             )
             .map((event) => {
-              const duration = getHoursDifference(
-                event.dateStart,
-                event.dateEnd
-              );
+              const duration =
+                event.type === "event"
+                  ? getHoursDifference(
+                      (event as Event).dateStart,
+                      (event as Event).dateEnd
+                    )
+                  : 1;
               return (
                 <Pressable
                   key={event.id}
                   style={({ pressed }) => pressed && styles.pressed}
-                  onPress={() => onEventSelected(event.id)}
+                  onPress={() => onEventSelected(event.id, event.type)}
                 >
                   <View
                     style={[
@@ -148,7 +169,10 @@ const Calendar = (props: CalendarProps) => {
                       {
                         height:
                           32 * (duration < 1 ? 1 : duration > 4 ? 5 : duration),
-                        backgroundColor: event.color,
+                        backgroundColor:
+                          event.type === "event"
+                            ? (event as Event).color
+                            : notificationsDefaultColor,
                       },
                     ]}
                   >
@@ -158,7 +182,9 @@ const Calendar = (props: CalendarProps) => {
                         duration < 1 ? 1 : duration > 4 ? 5 : duration
                       }
                     >
-                      {event.title}
+                      {event.type === "event"
+                        ? (event as Event).title
+                        : (event as Notification).text}
                     </Text>
                   </View>
                 </Pressable>
@@ -169,10 +195,13 @@ const Calendar = (props: CalendarProps) => {
     });
   };
 
-  const onEventSelected = (id: string) => {
+  const onEventSelected = (id: string, type: string) => {
     navigation.navigate("AddEventStack", {
       screen: "AddEvent",
-      params: { eventId: id },
+      params: {
+        eventId: type === "event" && id,
+        notificationId: type !== "event" && id,
+      },
     });
   };
 

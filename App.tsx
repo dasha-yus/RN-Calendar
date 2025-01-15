@@ -36,7 +36,10 @@ import { getAllNotifications } from "./api/notifications";
 import { setNotifications } from "./store/reducers/notifications";
 import MapScreen from "./screens/Map";
 import { Event, setEvents } from "./store/reducers/events";
-import { scheduleEventNotifications } from "./utils/notifications";
+import {
+  scheduleEventNotifications,
+  scheduleNotifications,
+} from "./utils/notifications";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => {
@@ -191,8 +194,11 @@ function AuthenticatedStack() {
           await scheduleEventNotifications(event);
         }
 
-        // const notifications = await getAllNotifications();
-        // dispatch(setNotifications({ notifications }));
+        const notifications = await getAllNotifications();
+        dispatch(setNotifications({ notifications }));
+        for (const notification of notifications) {
+          await scheduleNotifications(notification);
+        }
       } catch (error) {
         // console.error("Error fetching data:", error);
       } finally {
@@ -207,9 +213,11 @@ function AuthenticatedStack() {
     const subsciption = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const eventId = response.notification.request.content.data.eventId;
+        const notificationId =
+          response.notification.request.content.data.notificationId;
         navigation.navigate("AddEventStack", {
           screen: "AddEvent",
-          params: { eventId },
+          params: { eventId, notificationId },
         });
       }
     );

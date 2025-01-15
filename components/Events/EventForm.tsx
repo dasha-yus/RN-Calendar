@@ -35,6 +35,7 @@ import NotificationPicker, {
 } from "../pickers/NotificationPicker";
 import { formatMinutes } from "../../utils/general";
 import { scheduleEventNotifications } from "../../utils/notifications";
+import LocationPicker from "../pickers/LocationPicker";
 
 export const repeats = [
   { label: "None", value: "none" },
@@ -251,7 +252,7 @@ const EventForm: React.FC<EventFormProps> = ({ selectedEvent }) => {
                 value={selectedImage}
                 onTakeImage={takeImageHandler}
               />
-              {/* <LocationPicker onPickLocation={pickLocationHandler} /> */}
+              <LocationPicker onPickLocation={pickLocationHandler} />
               <Pressable
                 style={({ pressed }) => pressed && styles.pressed}
                 onPress={() => setColorPickerModalOpen(true)}
@@ -307,7 +308,7 @@ export default EventForm;
 
 const styles = StyleSheet.create({
   form: {
-    height: "96%",
+    height: "87%",
     width: "100%",
     justifyContent: "space-between",
   },

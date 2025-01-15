@@ -1,6 +1,7 @@
 import * as Notifications from "expo-notifications";
 
 import { Event } from "../store/reducers/events";
+import { Notification } from "../store/reducers/notifications";
 
 export const scheduleEventNotifications = async (event: Partial<Event>) => {
   const eventTime = new Date(event.dateStart!);
@@ -24,4 +25,21 @@ export const scheduleEventNotifications = async (event: Partial<Event>) => {
       trigger: notificationTime,
     });
   }
+};
+
+export const scheduleNotifications = async (
+  notification: Partial<Notification>
+) => {
+  const notificationTime = new Date(new Date(notification.date!).getTime());
+
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Notification",
+      body: notification.text,
+      data: {
+        notificationId: notification.id,
+      },
+    },
+    trigger: notificationTime,
+  });
 };

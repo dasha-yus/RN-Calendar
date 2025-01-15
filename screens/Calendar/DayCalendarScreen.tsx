@@ -6,6 +6,11 @@ import Colors from "../../constants/colors";
 import { useSelector } from "react-redux";
 import { Event, EventsState } from "../../store/reducers/events";
 import { getDaysDifference, getHoursDifference } from "../../utils/date";
+import {
+  Notification,
+  NotificationsState,
+} from "../../store/reducers/notifications";
+import { SettingsState } from "../../store/reducers/settings";
 
 const dateOptions: Intl.DateTimeFormatOptions = {
   weekday: "long",
@@ -17,8 +22,14 @@ const dateOptions: Intl.DateTimeFormatOptions = {
 const DayCalendarScreen = ({ route, navigation }: any) => {
   const now = new Date();
 
+  const { notificationsDefaultColor } = useSelector(
+    (state: { settings: SettingsState }) => state.settings
+  );
   const { events } = useSelector(
     (state: { events: EventsState }) => state.events
+  );
+  const { notifications } = useSelector(
+    (state: { notifications: NotificationsState }) => state.notifications
   );
 
   const [day, setDay] = useState(now.getDate());
@@ -89,10 +100,13 @@ const DayCalendarScreen = ({ route, navigation }: any) => {
     setYear(nextDate.getFullYear());
   };
 
-  const onEventSelected = (id: string) => {
+  const onEventSelected = (id: string, type: string) => {
     navigation.navigate("AddEventStack", {
       screen: "AddEvent",
-      params: { eventId: id },
+      params: {
+        eventId: type === "event" && id,
+        notificationId: type !== "event" && id,
+      },
     });
   };
 
@@ -104,49 +118,59 @@ const DayCalendarScreen = ({ route, navigation }: any) => {
             <Text style={styles.hourText}>
               {index.toString().length === 1 ? `0${index}` : index}:00
             </Text>
-            {events
+            {[...events, ...notifications]
               .filter((event) => {
-                const startDate = new Date(event.dateStart);
-                const endDate = new Date(event.dateEnd);
-                const selectedDate = new Date(year, month, day);
+                const startDate =
+                  event.type === "event"
+                    ? new Date((event as Event).dateStart)
+                    : new Date((event as Notification).date);
 
-                const diffDays = getDaysDifference(startDate, endDate);
+                if (event.type === "event") {
+                  const endDate = new Date((event as Event).dateEnd);
+                  const selectedDate = new Date(year, month, day);
 
-                // If the event lasts more than a day, check if the selected date is within the range
-                if (diffDays > 1) {
-                  return (
-                    selectedDate >= startDate &&
-                    selectedDate <= endDate &&
-                    new Date(event.dateStart).getHours() === index
-                  );
+                  const diffDays = getDaysDifference(startDate, endDate);
+
+                  // If the event lasts more than a day, check if the selected date is within the range
+                  if (diffDays > 1) {
+                    return (
+                      selectedDate >= startDate &&
+                      selectedDate <= endDate &&
+                      startDate.getHours() === index
+                    );
+                  }
                 }
 
                 return (
-                  (new Date(event.dateStart).getDate() === day ||
+                  (startDate.getDate() === day ||
                     event.repeat === "daily" ||
                     (event.repeat === "weekly" &&
-                      new Date(event.dateStart).getDay() ===
+                      startDate.getDay() ===
                         new Date(year, month, day).getDay()) ||
                     (event.repeat === "monthly" &&
-                      new Date(event.dateStart).getDate() === day)) &&
-                  new Date(event.dateStart).getHours() === index
+                      startDate.getDate() === day)) &&
+                  startDate.getHours() === index
                 );
               })
-              .sort(
-                (a, b) =>
-                  new Date(a.dateStart).getTime() -
-                  new Date(b.dateStart).getTime()
+              .sort((a, b) =>
+                a.type === "event"
+                  ? new Date((a as Event).dateStart).getTime() -
+                    new Date((b as Event).dateStart).getTime()
+                  : 0
               )
               .map((event) => {
-                const duration = getHoursDifference(
-                  event.dateStart,
-                  event.dateEnd
-                );
+                const duration =
+                  event.type === "event"
+                    ? getHoursDifference(
+                        (event as Event).dateStart,
+                        (event as Event).dateEnd
+                      )
+                    : 1;
                 return (
                   <Pressable
                     key={event.id}
                     style={({ pressed }) => pressed && styles.pressed}
-                    onPress={() => onEventSelected(event.id)}
+                    onPress={() => onEventSelected(event.id, event.type)}
                   >
                     <View
                       style={[
@@ -155,7 +179,10 @@ const DayCalendarScreen = ({ route, navigation }: any) => {
                           height:
                             32 *
                             (duration < 1 ? 1 : duration > 4 ? 5 : duration),
-                          backgroundColor: event.color,
+                          backgroundColor:
+                            event.type === "event"
+                              ? (event as Event).color
+                              : notificationsDefaultColor,
                         },
                       ]}
                     >
@@ -165,7 +192,9 @@ const DayCalendarScreen = ({ route, navigation }: any) => {
                           duration < 1 ? 1 : duration > 4 ? 5 : duration
                         }
                       >
-                        {event.title}
+                        {event.type === "event"
+                          ? (event as Event).title
+                          : (event as Notification).text}
                       </Text>
                     </View>
                   </Pressable>

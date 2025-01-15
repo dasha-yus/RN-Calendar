@@ -1,12 +1,23 @@
 import { useLayoutEffect, useState } from "react";
-import { StyleSheet, View, Text, Dimensions, Pressable, ScrollView } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  Dimensions,
+  Pressable,
+  ScrollView,
+} from "react-native";
 import GestureRecognizer from "react-native-swipe-gestures";
 
 import Colors from "../../constants/colors";
 import { useSelector } from "react-redux";
 import { SettingsState } from "../../store/reducers/settings";
-import { EventsState } from "../../store/reducers/events";
+import { Event, EventsState } from "../../store/reducers/events";
 import { getDaysDifference } from "../../utils/date";
+import {
+  Notification,
+  NotificationsState,
+} from "../../store/reducers/notifications";
 
 const { height } = Dimensions.get("window");
 
@@ -15,11 +26,14 @@ const MonthCalendarScreen = ({ navigation }: any) => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [daysInMonth, setDaysInMonth] = useState<number[]>([]);
 
-  const { firstDay } = useSelector(
+  const { firstDay, notificationsDefaultColor } = useSelector(
     (state: { settings: SettingsState }) => state.settings
   );
   const { events } = useSelector(
     (state: { events: EventsState }) => state.events
+  );
+  const { notifications } = useSelector(
+    (state: { notifications: NotificationsState }) => state.notifications
   );
 
   useLayoutEffect(() => {
@@ -75,17 +89,23 @@ const MonthCalendarScreen = ({ navigation }: any) => {
       >
         <View>
           <Text>{date}</Text>
-          {events
+          {[...events, ...notifications]
             .filter((event) => {
-              const startDate = new Date(event.dateStart);
-              const endDate = new Date(event.dateEnd);
               const selectedDate = new Date(selectedYear, selectedMonth, date);
+              const startDate =
+                event.type === "event"
+                  ? new Date((event as Event).dateStart)
+                  : new Date((event as Notification).date);
 
-              const diffDays = getDaysDifference(startDate, endDate);
+              if (event.type === "event") {
+                const endDate = new Date((event as Event).dateEnd);
 
-              // If the event lasts more than a day, check if the selected date is within the range
-              if (diffDays > 1) {
-                return selectedDate >= startDate && selectedDate <= endDate;
+                const diffDays = getDaysDifference(startDate, endDate);
+
+                // If the event lasts more than a day, check if the selected date is within the range
+                if (diffDays > 1) {
+                  return selectedDate >= startDate && selectedDate <= endDate;
+                }
               }
 
               if (event.repeat === "weekly") {
@@ -101,21 +121,29 @@ const MonthCalendarScreen = ({ navigation }: any) => {
                 );
               }
             })
-            .sort(
-              (a, b) =>
-                new Date(a.dateStart).getTime() -
-                new Date(b.dateStart).getTime()
+            .sort((a, b) =>
+              a.type === "event"
+                ? new Date((a as Event).dateStart).getTime() -
+                  new Date((b as Event).dateStart).getTime()
+                : 0
             )
             .map((event, idx) => (
               <View
                 key={idx}
                 style={[
                   styles.eventContainer,
-                  { backgroundColor: event.color },
+                  {
+                    backgroundColor:
+                      event.type === "event"
+                        ? (event as Event).color
+                        : notificationsDefaultColor,
+                  },
                 ]}
               >
                 <Text style={styles.eventText} numberOfLines={1}>
-                  {event.title}
+                  {event.type === "event"
+                    ? (event as Event).title
+                    : (event as Notification).text}
                 </Text>
               </View>
             ))}
